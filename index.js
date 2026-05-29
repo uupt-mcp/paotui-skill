@@ -286,12 +286,13 @@ async function auth(params) {
 /**
  * 订单询价
  * @param {Object} params - 询价参数
- * @param {string} params.fromAddress - 起始地址（必填）
- * @param {string} params.toAddress - 目的地址（必填）
+ * @param {string} params.fromAddress - 起始地址（必填，帮忙订单时为帮忙地点）
+ * @param {string} params.toAddress - 目的地址（必填，帮忙订单时与fromAddress相同）
  * @param {string} params.cityName - 城市名称（可选，默认郑州市）
+ * @param {string} [params.orderType='send'] - 订单类型，'send'为跑腿配送，'help'为帮忙服务
  */
 async function orderPrice(params) {
-  const { fromAddress, toAddress, cityName = '郑州市' } = params;
+  const { fromAddress, toAddress, cityName = '郑州市', orderType = 'send' } = params;
   
   if (!fromAddress || !toAddress) {
     throw new Error('起始地址和目的地址为必填项');
@@ -303,15 +304,22 @@ async function orderPrice(params) {
     city = city + '市';
   }
   
+  const isHelp = orderType && orderType.toLowerCase() === 'help';
+  
   const biz = {
     fromAddress: fromAddress,
-    toAddress: toAddress,
-    sendType: 'SEND',
+    toAddress: isHelp ? fromAddress : toAddress,
+    sendType: isHelp ? 'HELP' : 'SEND',
     cityName: city,
     specialChannel: 2
   };
   
-  console.log('💰 正在查询配送价格...');
+  if (isHelp) {
+    biz.goodsType = 'ALLHELP';
+  }
+  
+  const typeLabel = isHelp ? '帮忙服务' : '配送';
+  console.log(`💰 正在查询${typeLabel}价格...`);
   return await postRequest(biz, 'order/orderPrice');
 }
 
@@ -321,9 +329,10 @@ async function orderPrice(params) {
  * @param {string} params.priceToken - 询价返回的 token（必填）
  * @param {string} params.receiverPhone - 收件人电话（必填）
  * @param {string} [params.channel] - 聊天渠道（wechat 渠道 specialChannel=4，其他渠道=2）
+ * @param {string} [params.note] - 帮忙内容描述（帮忙订单时必填，描述具体需要跑男提供的帮助服务）
  */
 async function createOrder(params) {
-  const { priceToken, receiverPhone, channel } = params;
+  const { priceToken, receiverPhone, channel, note } = params;
   
   if (!priceToken) {
     throw new Error('priceToken 为必填项，请先调用订单询价接口');
@@ -345,6 +354,10 @@ async function createOrder(params) {
     specialChannel: specialChannel,
     specialType: 'NOT_NEED_WARM'
   };
+  
+  if (note) {
+    biz.note = note;
+  }
   
   console.log('📦 正在创建订单...');
   return await postRequest(biz, 'order/addOrder');
@@ -442,10 +455,11 @@ module.exports = {
 if (require.main === module) {
   console.log(`
 🚚 UU跑腿同城配送服务
+支持跑腿配送(SEND)和帮忙服务(HELP)两种订单类型。
 
 可用命令:
   node scripts/register.js       - 手机号注册/获取授权
-  node scripts/order-price.js    - 订单询价
+  node scripts/order-price.js    - 订单询价（支持跑腿配送和帮忙服务）
   node scripts/create-order.js   - 创建订单
   node scripts/order-detail.js   - 查询订单详情
   node scripts/cancel-order.js   - 取消订单

@@ -2,11 +2,12 @@
 """
 UU跑腿同城配送服务 Agent Skill (Python 版本)
 提供订单询价、发单、订单查询、取消订单、跑男追踪等功能。
+支持跑腿配送(SEND)和帮忙服务(HELP)两种订单类型。
 
 用法：
     python uupt_delivery.py register --mobile="手机号" [--sms-code="验证码"]
-    python uupt_delivery.py price --from-address="起始地址" --to-address="目的地址" [--city="城市名"]
-    python uupt_delivery.py create --price-token="询价token" --receiver-phone="收件人电话"
+    python uupt_delivery.py price --from-address="起始地址" --to-address="目的地址" [--city="城市名"] [--order-type="send|help"]
+    python uupt_delivery.py create --price-token="询价token" --receiver-phone="收件人电话" [--note="帮忙内容"]
     python uupt_delivery.py detail --order-code="订单编号"
     python uupt_delivery.py cancel --order-code="订单编号" [--reason="取消原因"]
     python uupt_delivery.py track --order-code="订单编号"
@@ -266,8 +267,15 @@ def format_price(price_in_fen: int) -> str:
 
 # ============ 业务功能 ============
 
-def order_price(from_address: str, to_address: str, city_name: str = "郑州市") -> dict:
-    """订单询价"""
+def order_price(from_address: str, to_address: str, city_name: str = "郑州市", order_type: str = "send") -> dict:
+    """订单询价
+    
+    Args:
+        from_address: 起始地址（帮忙订单时为帮忙地点）
+        to_address: 目的地址（帮忙订单时与from_address相同）
+        city_name: 城市名称
+        order_type: 订单类型，"send"为跑腿配送，"help"为帮忙服务
+    """
     if not from_address or not to_address:
         raise ValueError("起始地址和目的地址为必填项")
     
@@ -275,25 +283,32 @@ def order_price(from_address: str, to_address: str, city_name: str = "郑州市"
     if city_name and not city_name.endswith("市"):
         city_name = city_name + "市"
     
+    is_help = order_type.lower() == "help"
+    
     biz = {
         "fromAddress": from_address,
-        "toAddress": to_address,
-        "sendType": "SEND",
+        "toAddress": from_address if is_help else to_address,
+        "sendType": "HELP" if is_help else "SEND",
         "cityName": city_name,
         "specialChannel": 2,
     }
     
-    print("[询价] 正在查询配送价格...")
+    if is_help:
+        biz["goodsType"] = "ALLHELP"
+    
+    type_label = "帮忙服务" if is_help else "配送"
+    print(f"[询价] 正在查询{type_label}价格...")
     return post_request(biz, "order/orderPrice")
 
 
-def create_order(price_token: str, receiver_phone: str, channel: str = "") -> dict:
+def create_order(price_token: str, receiver_phone: str, channel: str = "", note: str = "") -> dict:
     """创建订单
     
     Args:
         price_token: 询价返回的 token
         receiver_phone: 收件人电话
         channel: 聊天渠道（wechat 渠道 specialChannel=4，其他渠道=2）
+        note: 帮忙内容描述（帮忙订单时必填，用于描述具体需要跑男提供的帮助服务）
     """
     if not price_token:
         raise ValueError("priceToken 为必填项，请先调用订单询价接口")
@@ -312,6 +327,9 @@ def create_order(price_token: str, receiver_phone: str, channel: str = "") -> di
         "specialChannel": special_channel,
         "specialType": "NOT_NEED_WARM",
     }
+    
+    if note:
+        biz["note"] = note
     
     print("[下单] 正在创建订单...")
     return post_request(biz, "order/addOrder")
@@ -373,12 +391,13 @@ def format_price_result(result: dict) -> None:
             print("\n[提示] 使用此 priceToken 创建订单")
 
 
-def format_create_result(result: dict, channel: str = "") -> None:
+def format_create_result(result: dict, channel: str = "", note: str = "") -> None:
     """格式化创建订单结果
     
     Args:
         result: API 返回结果
         channel: 聊天渠道（只有 wechat 渠道才生成二维码图片）
+        note: 帮忙内容描述（有值表示帮忙订单，余额不足时提示充值而非第三方支付）
     """
     print("[结果] 创建结果:")
     print(json.dumps(result, indent=2, ensure_ascii=False))
@@ -390,54 +409,68 @@ def format_create_result(result: dict, channel: str = "") -> None:
             payment_url = data["orderUrl"]
             order_code = data["orderCode"]
             
-            print("\n[警告] 账户余额不足，需要完成支付")
-            print(f"   订单编号: {order_code}")
-            
-            # 检查是否为微信渠道，只有微信渠道才生成二维码图片
-            is_wechat_channel = channel.lower() == 'wechat' if channel else False
-            
-            if is_wechat_channel:
-                # 微信渠道：生成二维码图片
-                qrcode_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={quote(payment_url, safe='')}"
+            # 帮忙订单（有 note 参数）：暂不支持第三方支付，提示用户充值
+            if note:
+                print("\n[警告] 帮忙订单暂不支持第三方支付")
+                print(f"   订单编号: {order_code}")
+                print("\n[提示] 请通过 UU跑腿APP或联系客服为账户充值后重新下单")
                 
-                try:
-                    script_dir = os.path.dirname(os.path.abspath(__file__))
-                    qr_file_name = "payment_qrcode.png"
-                    qr_file_path = os.path.join(script_dir, qr_file_name)
-                    
-                    response = requests.get(qrcode_url, timeout=10)
-                    response.raise_for_status()
-                    
-                    with open(qr_file_path, 'wb') as f:
-                        f.write(response.content)
-                    
-                    print("\n[支付] 支付信息：")
-                    print(f"   支付链接: {payment_url}")
-                    print(f"   二维码图片: {qr_file_path}")
-                    
-                    print("\n[PAYMENT_REQUIRED]")
-                    print(f"ORDER_CODE={order_code}")
-                    print(f"PAYMENT_URL={payment_url}")
-                    print(f"QRCODE_FILE={qr_file_path}")
-                except Exception as e:
-                    print(f"   下载二维码失败: {e}")
-                    
-                    print("\n[支付] 支付信息：")
-                    print(f"   支付链接: {payment_url}")
-                    
-                    print("\n[PAYMENT_REQUIRED]")
-                    print(f"ORDER_CODE={order_code}")
-                    print(f"PAYMENT_URL={payment_url}")
-            else:
-                # 其他渠道：只输出支付链接
-                print("\n[支付] 支付信息：")
-                print(f"   支付链接: {payment_url}")
-                
-                print("\n[PAYMENT_REQUIRED]")
+                print("\n[RECHARGE_REQUIRED]")
                 print(f"ORDER_CODE={order_code}")
-                print(f"PAYMENT_URL={payment_url}")
-            
-            print("\n   支付完成后，订单将自动生效")
+                print(f"NOTE={note}")
+                print("HELP_ORDER_NO_THIRD_PARTY_PAY=帮忙订单暂不支持第三方支付，需要充值后重新下单")
+                
+                print("\n   充值完成后，请重新发起下单")
+            else:
+                # 跑腿配送订单：引导第三方支付
+                print("\n[警告] 账户余额不足，需要完成支付")
+                print(f"   订单编号: {order_code}")
+                
+                # 检查是否为微信渠道，只有微信渠道才生成二维码图片
+                is_wechat_channel = channel.lower() == 'wechat' if channel else False
+                
+                if is_wechat_channel:
+                    # 微信渠道：生成二维码图片
+                    qrcode_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={quote(payment_url, safe='')}"
+                    
+                    try:
+                        script_dir = os.path.dirname(os.path.abspath(__file__))
+                        qr_file_name = "payment_qrcode.png"
+                        qr_file_path = os.path.join(script_dir, qr_file_name)
+                        
+                        response = requests.get(qrcode_url, timeout=10)
+                        response.raise_for_status()
+                        
+                        with open(qr_file_path, 'wb') as f:
+                            f.write(response.content)
+                        
+                        print("\n[支付] 支付信息：")
+                        print(f"   支付链接: {payment_url}")
+                        print(f"   二维码图片: {qr_file_path}")
+                        
+                        print("\n[PAYMENT_REQUIRED]")
+                        print(f"ORDER_CODE={order_code}")
+                        print(f"PAYMENT_URL={payment_url}")
+                        print(f"QRCODE_FILE={qr_file_path}")
+                    except Exception as e:
+                        print(f"   下载二维码失败: {e}")
+                        
+                        print("\n[支付] 支付信息：")
+                        print(f"   支付链接: {payment_url}")
+                        
+                        print("\n[PAYMENT_REQUIRED]")
+                        print(f"ORDER_CODE={order_code}")
+                        print(f"PAYMENT_URL={payment_url}")
+                else:
+                    # 其他渠道：只输出支付链接
+                    print("\n[支付] 支付信息：")
+                    print(f"   支付链接: {payment_url}")
+                    
+                    print("\n[PAYMENT_REQUIRED]")
+                    print(f"ORDER_CODE={order_code}")
+                    print(f"PAYMENT_URL={payment_url}")
+                
+                print("\n   支付完成后，订单将自动生效")
         else:
             print("\n[成功] 订单创建成功!")
             print(f"   订单编号: {data['orderCode']}")
@@ -515,13 +548,14 @@ def print_usage():
     """打印使用说明"""
     usage = """
 UU跑腿同城配送服务 (Python 版本)
+支持跑腿配送(SEND)和帮忙服务(HELP)两种订单类型。
 
 用法:
   python uupt_delivery.py <命令> [参数]
 
 命令:
   register  手机号注册/获取授权
-  price     订单询价
+  price     订单询价（支持跑腿配送和帮忙服务）
   create    创建订单
   detail    查询订单详情
   cancel    取消订单
@@ -530,8 +564,12 @@ UU跑腿同城配送服务 (Python 版本)
 示例:
   python uupt_delivery.py register --mobile="13800138000"
   python uupt_delivery.py register --mobile="13800138000" --sms-code="123456"
+  # 跑腿配送询价
   python uupt_delivery.py price --from-address="郑州市金水区农业路" --to-address="郑州市二七区德化街"
+  # 帮忙服务询价
+  python uupt_delivery.py price --from-address="郑州市金水区农业路" --order-type="help"
   python uupt_delivery.py create --price-token="xxx" --receiver-phone="13800138000"
+  python uupt_delivery.py create --price-token="xxx" --receiver-phone="13800138000" --note="帮我搬一箱矿泉水到3楼"
   python uupt_delivery.py detail --order-code="UU123456789"
   python uupt_delivery.py cancel --order-code="UU123456789" --reason="用户改变主意"
   python uupt_delivery.py track --order-code="UU123456789"
@@ -615,22 +653,26 @@ def main():
                     sys.exit(1)
         
         elif command == "price":
-            parser.add_argument("--from-address", required=True, help="起始地址")
-            parser.add_argument("--to-address", required=True, help="目的地址")
+            parser.add_argument("--from-address", required=True, help="起始地址（帮忙订单时为帮忙地点）")
+            parser.add_argument("--to-address", default="", help="目的地址（帮忙订单时无需填写，自动使用起始地址）")
             parser.add_argument("--city", default="郑州市", help="城市名称")
+            parser.add_argument("--order-type", default="send", help="订单类型: send=跑腿配送, help=帮忙服务")
             args = parser.parse_args(sys.argv[2:])
             
-            result = order_price(args.from_address, args.to_address, args.city)
+            # 帮忙订单时 to_address 使用 from_address 的值
+            to_addr = args.to_address if args.to_address else args.from_address
+            result = order_price(args.from_address, to_addr, args.city, args.order_type)
             format_price_result(result)
             
         elif command == "create":
             parser.add_argument("--price-token", required=True, help="询价返回的token")
             parser.add_argument("--receiver-phone", required=True, help="收件人电话")
             parser.add_argument("--channel", default="", help="聊天渠道（如 wechat、feishu、dingtalk 等）")
+            parser.add_argument("--note", default="", help="帮忙内容描述（帮忙订单时必填，描述具体需要跑男提供的帮助服务）")
             args = parser.parse_args(sys.argv[2:])
             
-            result = create_order(args.price_token, args.receiver_phone, args.channel)
-            format_create_result(result, args.channel)
+            result = create_order(args.price_token, args.receiver_phone, args.channel, args.note)
+            format_create_result(result, args.channel, args.note)
             
         elif command == "detail":
             parser.add_argument("--order-code", required=True, help="订单编号")

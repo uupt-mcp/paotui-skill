@@ -1,19 +1,20 @@
 # UU跑腿同城配送服务 Skill
 
-[![Version](https://img.shields.io/badge/version-1.0.5-blue.svg)](./SKILL.md)
+[![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)](./SKILL.md)
 
-Skill 让 AI 助手学会新技能。通过安装本 Skill，AI 助手可以获得同城即时配送的专业能力，在对话中自动识别用户的配送需求并调用对应的接口来完成任务。
+Skill 让 AI 助手学会新技能。通过安装本 Skill，AI 助手可以获得同城即时配送和现场帮忙服务的专业能力，在对话中自动识别用户的需求并调用对应的接口来完成任务。
 
 ## 核心能力
 
 | 能力 | 说明 | 适用场景 |
 |------|------|---------|
 | 手机号注册 | 首次使用时通过短信验证自动获取授权 | 首次使用，自动触发 |
-| 订单询价 | 计算从起始地址到目的地址的配送费用 | 用户想知道配送价格 |
-| 创建订单 | 发起配送订单，支持余额支付和微信支付 | 用户确认要发单配送 |
+| 订单询价 | 计算配送费用或帮忙服务费用 | 用户想知道价格 |
+| 创建配送订单 | 发起跑腿配送订单（从A地到B地） | 用户需要同城配送物品 |
+| 创建帮忙订单 | 发起帮忙服务订单（在指定地点获得现场协助） | 用户需要现场帮忙（搬东西、取号、排队等） |
 | 查询订单 | 获取订单的当前状态和详细信息 | 用户想了解订单进度 |
-| 取消订单 | 取消未完成的配送订单 | 用户不想继续配送 |
-| 跑男追踪 | 实时查询配送骑手的位置和状态 | 用户想知道骑手在哪 |
+| 取消订单 | 取消未完成的订单 | 用户不想继续服务 |
+| 跑男追踪 | 实时查询跑男的位置和状态 | 用户想知道跑男在哪 |
 
 ## 运行环境
 
@@ -89,12 +90,21 @@ node scripts/register.js --mobile="13800138000" --smsCode="123456"
 ### 使用示例
 
 ```bash
-# 订单询价
+# === 跑腿配送 ===
+# 询价
 node scripts/order-price.js --fromAddress="郑州市金水区农业路经三路交叉口" --toAddress="郑州市二七区德化街100号"
 
 # 创建订单
 node scripts/create-order.js --priceToken="xxx" --receiverPhone="13800138000"
 
+# === 帮忙服务 ===
+# 询价
+node scripts/order-price.js --fromAddress="郑州人民医院" --orderType="help"
+
+# 创建帮忙订单（必须带 --note 参数描述帮忙内容）
+node scripts/create-order.js --priceToken="xxx" --receiverPhone="13800138000" --note="帮我在郑州人民医院挂个号"
+
+# === 通用操作 ===
 # 查询订单
 node scripts/order-detail.js --orderCode="UU123456789"
 
@@ -141,8 +151,9 @@ node scripts/driver-track.js --orderCode="UU123456789"
 - **地址完整性**：地址信息越完整，配送越准确
 - **城市默认值**：如未指定城市，默认使用"郑州市"
 - **价格单位**：API 返回的价格单位是分，展示时需除以 100 转换为元
-- **余额不足**：当返回 `[PAYMENT_REQUIRED]` 和 `[WECHAT_PAY_QRCODE]` 时，需以附件形式发送微信支付二维码图片，同时提供在线链接作为兜底方案
+- **余额不足**：跑腿配送订单返回 `[PAYMENT_REQUIRED]` 时，需以附件形式发送微信支付二维码图片，同时提供在线链接作为兜底方案；帮帮订单暂不支持第三方支付，返回 `[RECHARGE_REQUIRED]` 时提示用户充值后重新下单
 - **配置文件**：`defaults.json` 为内置凭证，请勿修改或删除
+- **帮忙订单**：帮忙订单的 fromAddress 和 toAddress 相同，必须传递 `--note` 参数描述具体帮忙内容
 
 ## 相关链接
 
