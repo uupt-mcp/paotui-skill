@@ -64,7 +64,7 @@ UU跑腿同城配送服务为用户提供便捷的同城即时配送能力和现
 本 skill 同时提供 **Node.js** 和 **Python** 两种版本，Agent 自动检测可用环境。
 
 | 环境 | 依赖安装 | 脚本入口 |
-|------|---------|---------|
+|------|---------|--------|
 | Node.js | `npm install` | `scripts/*.js`、`index.js` |
 | Python | `pip install -r requirements.txt` | `uupt_delivery.py` |
 
@@ -75,7 +75,7 @@ UU跑腿同城配送服务为用户提供便捷的同城即时配送能力和现
 收到用户请求后，先判断场景。Agent 需智能识别**跑腿配送(SEND)** vs **帮忙服务(HELP)**：
 
 | 用户表达 | 识别为 | 判断依据 |
-|---------|--------|---------|
+|---------|--------|--------|
 | "从A送到B"、"把X寄到Y"、"配送" | 跑腿配送(SEND) | 两个不同地点之间的物品传递 |
 | "帮我在X地点..."、"帮我搬/扔/装..." | 帮忙服务(HELP) | 只有一个地点，跑男在现场提供协助 |
 | "帮我买个X送到Y" | 跑腿配送(SEND) | 本质是A到B的配送，用了"帮"字 |
@@ -86,7 +86,7 @@ UU跑腿同城配送服务为用户提供便捷的同城即时配送能力和现
 **六大场景**：
 
 | 场景 | 触发条件 | 所需信息 |
-|------|---------|---------|
+|------|---------|--------|
 | 场景零：首次注册 | 执行脚本输出 `[REGISTRATION_REQUIRED]` | 手机号 / 开发者凭证 |
 | 场景一：订单询价 | 用户想知道费用 | 地址信息（配送需起止地址，帮忙只需地点） |
 | 场景二：创建订单 | 用户确认发单 | priceToken、收件人电话、帮忙内容(note) |
@@ -243,22 +243,7 @@ node scripts/create-order.js --priceToken="xxx" --receiverPhone="13800138000" --
 骑手正在接单中，请保持电话畅通。
 ```
 
-**情况二：余额不足（`[PAYMENT_REQUIRED]` / `[RECHARGE_REQUIRED]`）**
-
-**帮帮订单**（`[RECHARGE_REQUIRED]`）：帮帮订单暂不支持第三方支付，需提示用户充值：
-
-关键输出：`ORDER_CODE`、`NOTE`、`HELP_ORDER_NO_THIRD_PARTY_PAY`。
-
-```
-帮帮订单暂不支持第三方支付。
-
-订单编号：{order_code}
-帮忙内容：{note}
-
-请通过 UU跑腿商户端或联系客服为账户充值后重新下单。
-```
-
-**跑腿配送**（`[PAYMENT_REQUIRED]`）：
+**情况二：余额不足（`[PAYMENT_REQUIRED]`）**
 
 关键输出：`ORDER_CODE`、`PAYMENT_URL`、`QRCODE_FILE`（仅 `--channel="wechat"` 时）。
 
@@ -417,7 +402,7 @@ detail = order_detail(order_code=order['body']['orderCode'])
 - **询价有效期**：priceToken 有时效性，建议获取后尽快创建订单
 - **价格单位**：API 返回的价格单位是分，展示时除以 100 转换为元
 - **地址完整性**：地址越完整配送越准确。未指定城市默认"郑州市"
-- **余额不足**：`[PAYMENT_REQUIRED]` 时，微信渠道用 `message` 发送二维码图片附件，其他渠道发送支付链接；`[RECHARGE_REQUIRED]` 时，帮帮订单暂不支持第三方支付，提示用户充值后重新下单
+- **余额不足**：`[PAYMENT_REQUIRED]` 时，微信渠道用 `message` 发送二维码图片附件，其他渠道发送支付链接
 - **帮忙订单**：必须传 `--note` 参数，fromAddress = toAddress；务必先确认帮忙内容再下单
 - **配置文件**：`defaults.json` 为内置凭证，请勿修改或删除
 
