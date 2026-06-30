@@ -6,18 +6,6 @@ Skill 让 AI 助手学会新技能。通过安装本 Skill，AI 助手可以获�
 
 ## 安装方式
 
-### OpenClaw 用户：从 ClawHub 安装（推荐）
-
-在 ClawHub 应用市场一键安装：
-
-```bash
-clawhub install bang-wo-pao-tui
-```
-
-> 提示：如果未安装 ClawHub CLI，可用 `npx clawhub@latest install bang-wo-pao-tui` 直接运行。
-
-也可以访问 [ClawHub](https://clawhub.ai/) 网站搜索 `bang-wo-pao-tui`，下载 ZIP 包后解压到 Skills 目录。
-
 ### 从 GitHub 安装
 
 从 [GitHub Releases](https://github.com/uupt-mcp/paotui-skill/releases) 下载最新版本的 `uupt-delivery.zip`，解压到 Agent 的 Skill 目录后安装依赖。
@@ -40,6 +28,18 @@ pip install -r requirements.txt
 ```
 
 > 不同 Agent 的 Skill 目录位置不同，请根据实际使用的 Agent 调整路径。例如 **Claude Code** 的 Skill 目录为 `~/.claude/skills/`。
+
+### OpenClaw 用户：从 ClawHub 安装（推荐）
+
+在 ClawHub 应用市场一键安装：
+
+```bash
+clawhub install bang-wo-pao-tui
+```
+
+> 提示：如果未安装 ClawHub CLI，可用 `npx clawhub@latest install bang-wo-pao-tui` 直接运行。
+
+也可以访问 [ClawHub](https://clawhub.ai/) 网站搜索 `bang-wo-pao-tui`，下载 ZIP 包后解压到 Skills 目录。
 
 安装完成后，首次使用会自动引导注册，详见 [首次使用](#首次使用)。
 
