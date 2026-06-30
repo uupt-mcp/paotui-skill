@@ -4,6 +4,45 @@
 
 Skill 让 AI 助手学会新技能。通过安装本 Skill，AI 助手可以获得同城即时配送和现场帮忙服务的专业能力，在对话中自动识别用户的需求并调用对应的接口来完成任务。
 
+## 安装方式
+
+### OpenClaw 用户：从 ClawHub 安装（推荐）
+
+在 ClawHub 应用市场一键安装：
+
+```bash
+clawhub install uupt-delivery
+```
+
+> 提示：如果未安装 ClawHub CLI，可用 `npx clawhub@latest install uupt-delivery` 直接运行。
+
+也可以访问 [ClawHub](https://clawhub.ai/) 网站搜索 `uupt-delivery`，下载 ZIP 包后解压到 Skills 目录。
+
+### 从 GitHub 安装
+
+从 [GitHub Releases](https://github.com/uupt-mcp/uupt-delivery-skill/releases) 下载最新版本的 `uupt-delivery.zip`，解压到 Agent 的 Skill 目录后安装依赖。
+
+以 **Qoder** 为例（Skill 目录为 `~/.qoder/skills/`）：
+
+```bash
+# 下载最新版本
+wget https://github.com/uupt-mcp/uupt-delivery-skill/releases/latest/download/uupt-delivery.zip
+
+# 解压到 Skill 目录
+unzip uupt-delivery.zip -d ~/.qoder/skills/uupt-delivery
+
+# 进入目录安装依赖
+cd ~/.qoder/skills/uupt-delivery
+npm install
+
+# 或安装 Python 依赖
+pip install -r requirements.txt
+```
+
+> 不同 Agent 的 Skill 目录位置不同，请根据实际使用的 Agent 调整路径。例如 **Claude Code** 的 Skill 目录为 `~/.claude/skills/`。
+
+安装完成后，首次使用会自动引导注册，详见 [首次使用](#首次使用)。
+
 ## 核心能力
 
 | 能力 | 说明 | 适用场景 |
@@ -157,5 +196,6 @@ node scripts/driver-track.js --orderCode="UU123456789"
 
 ## 相关链接
 
-- [UU跑腿开放平台](https://open.uupt.com)
-- [API 文档](https://open.uupt.com/docs)
+- [ClawHub 应用市场](https://clawhub.ai/uupt-mcp/skills/uupt-delivery)
+- [GitHub 仓库](https://github.com/uupt-mcp/uupt-delivery-skill)
+- [UU跑腿开放平台](https://open.uupt.com/#/development/agentSkill/quickStart)

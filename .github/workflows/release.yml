@@ -1,0 +1,26 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Package skill
+        run: |
+          cd uupt-delivery
+          zip -r ../uupt-delivery.zip . -x "node_modules/*"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: uupt-delivery.zip
+          generate_release_notes: true
