@@ -2,7 +2,7 @@
 name: 帮我跑腿
 display_name: 帮我跑腿（官方推荐）
 description: >-
-  UU跑腿同城配送服务。支持跑腿配送和帮忙服务两种订单类型，包括订单询价、发单下单、查询订单、取消订单、骑手实时追踪。当用户表达任何与"送"、"取"、"寄"、"跑腿"、"发单"、"配送"、"帮忙"、"帮我"、"代取号"、"代排队"、"搬东西"等配送或帮忙需求时使用此skill。
+  UU跑腿同城配送服务。支持跑腿配送和帮忙服务两种订单类型，包括订单询价、发单下单、查询订单、取消订单、跑男实时追踪。当用户表达任何与"送"、"取"、"寄"、"跑腿"、"发单"、"配送"、"帮忙"、"帮我"、"代取号"、"代排队"、"搬东西"等配送或帮忙需求时使用此skill。
 version: 1.0.0
 priority: 100
 
@@ -92,7 +92,7 @@ UU跑腿同城配送服务为用户提供便捷的同城即时配送能力和现
 | 场景二：创建订单 | 用户确认发单 | priceToken、收件人电话、帮忙内容(note) |
 | 场景三：查询订单 | 用户想看订单状态 | 订单编号 |
 | 场景四：取消订单 | 用户要取消订单 | 订单编号 |
-| 场景五：跑男追踪 | 用户想看骑手位置 | 订单编号 |
+| 场景五：跑男追踪 | 用户想看跑男位置 | 订单编号 |
 
 ---
 
@@ -240,7 +240,7 @@ node scripts/create-order.js --priceToken="xxx" --receiverPhone="13800138000" --
 {帮忙订单：帮忙内容：{note} | 服务地点：{fromAddress}}
 配送费用：{price/100} 元
 
-骑手正在接单中，请保持电话畅通。
+跑男正在接单中，请保持电话畅通。
 ```
 
 **情况二：余额不足（`[PAYMENT_REQUIRED]`）**
@@ -289,7 +289,7 @@ node scripts/order-detail.js --orderCode="UU123456789"
 订单编号：{order_code} | 状态：{status}
 起点：{from_address} | 终点：{to_address}
 配送费：{price/100} 元
-骑手：{driver_name} {driver_phone}
+跑男：{driver_name} {driver_phone}
 ```
 
 ---
@@ -320,7 +320,7 @@ node scripts/driver-track.js --orderCode="UU123456789"
 回复模板：
 ```
 跑男实时位置：
-骑手：{driver_name} | 电话：{driver_phone}
+跑男：{driver_name} | 电话：{driver_phone}
 当前位置：{current_location} | 预计送达：{estimated_time}
 ```
 

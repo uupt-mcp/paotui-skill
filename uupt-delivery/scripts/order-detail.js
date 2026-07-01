@@ -11,10 +11,10 @@ const { orderDetail, formatPrice } = require('../index');
 function getOrderStatusText(state) {
   const statusMap = {
     1: '下单成功',
-    3: '骑手已接单',
-    4: '骑手已到达',
-    5: '骑手已取件',
-    6: '骑手送达中',
+    3: '跑男已接单',
+    4: '跑男已到达',
+    5: '跑男已取件',
+    6: '跑男送达中',
     10: '已完成',
     11: '已取消',
     20: '异常订单'
@@ -77,8 +77,8 @@ async function main() {
           console.log(`   终点地址: ${data.toAddress}`);
         }
         if (data.driverName) {
-          console.log(`   骑手姓名: ${data.driverName}`);
-          console.log(`   骑手电话: ${data.driverMobile || '-'}`);
+          console.log(`   跑男姓名: ${data.driverName}`);
+          console.log(`   跑男电话: ${data.driverMobile || '-'}`);
         }
       }
     }

@@ -55,7 +55,7 @@ async function main() {
         const data = result.data;
         console.log('\n🏃 跑男摘要:');
         if (data.driver_name) {
-          console.log(`   骑手姓名: ${data.driver_name}`);
+          console.log(`   跑男姓名: ${data.driver_name}`);
           console.log(`   联系电话: ${data.driver_phone || '-'}`);
         }
         if (data.longitude && data.latitude) {

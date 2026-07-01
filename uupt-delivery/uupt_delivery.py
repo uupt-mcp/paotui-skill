@@ -467,10 +467,10 @@ def get_order_status_text(state: int) -> str:
     """订单状态码映射"""
     status_map = {
         1: '下单成功',
-        3: '骑手已接单',
-        4: '骑手已到达',
-        5: '骑手已取件',
-        6: '骑手送达中',
+        3: '跑男已接单',
+        4: '跑男已到达',
+        5: '跑男已取件',
+        6: '跑男送达中',
         10: '已完成',
         11: '已取消',
         20: '异常订单'
@@ -495,8 +495,8 @@ def format_detail_result(result: dict, order_code: str) -> None:
         if data.get("toAddress"):
             print(f"   终点地址: {data['toAddress']}")
         if data.get("driverName"):
-            print(f"   骑手姓名: {data['driverName']}")
-            print(f"   骑手电话: {data.get('driverMobile', '-')}")
+            print(f"   跑男姓名: {data['driverName']}")
+            print(f"   跑男电话: {data.get('driverMobile', '-')}")
 
 
 def format_cancel_result(result: dict, order_code: str, reason: str) -> None:
@@ -518,9 +518,9 @@ def format_track_result(result: dict) -> None:
     
     if result.get("body"):
         data = result["body"]
-        print("\n[骑手] 跑男摘要:")
+        print("\n[跑男] 跑男摘要:")
         if data.get("driver_name"):
-            print(f"   骑手姓名: {data['driver_name']}")
+            print(f"   跑男姓名: {data['driver_name']}")
             print(f"   联系电话: {data.get('driver_phone', '-')}")
         if data.get("longitude") and data.get("latitude"):
             print(f"   当前位置: {data['longitude']}, {data['latitude']}")
